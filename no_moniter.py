@@ -4,6 +4,7 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 import tensorflow as tf
 import numpy as np
 import cv2
+import time
 from PIL import Image
 from dataclasses import dataclass
 from typing import Tuple, List, Optional
@@ -14,9 +15,9 @@ import threading
 @dataclass
 class Config:
     # 설정값을 관리하는 클래스
-    MODEL_PATH: str = "./MobileNet_V2_model/detect.tflite"
-    LABEL_PATH: str = "./MobileNet_V2_model/labelmap.txt"
-    VIDEO_PATH: str = "./video/test_c.avi"
+    MODEL_PATH: str = "./model/detect.tflite"
+    LABEL_PATH: str = "./model/labelmap.txt"
+    VIDEO_PATH: str = "./video/test.avi"
     CONFIDENCE_THRESHOLD: float = 0.2
     IOU_THRESHOLD: float = 0.5
     ROI1_RATIO: Tuple[float, float, float, float] = (0.3, 0.5, 0.4, 0.2)
@@ -256,14 +257,24 @@ class BeeDetector:
             raise ValueError("비디오를 열 수 없습니다.")
 
         try:
+            frame_count = 0
+            start_time = time.time()
             while cap.isOpened():
                 ret, frame = cap.read()
                 if not ret:
                     break
 
                 processed_frame = self.process_frame(frame)
-                # cv2.imshow('Bee activaty', processed_frame)
 
+                frame_count += 1
+                elapsed_time = time.time() - start_time
+                if elapsed_time >= 1.0:  # 1초마다 FPS 계산
+                    fps = frame_count / elapsed_time
+                    print(f"FPS: {fps:.2f}")
+                    frame_count = 0
+                    start_time = time.time()
+
+                # cv2.imshow('Bee activaty', processed_frame)
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
         finally:
