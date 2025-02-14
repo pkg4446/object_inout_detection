@@ -243,27 +243,10 @@ class BeeDetector:
 
     def _draw_rois(self, frame: np.ndarray, roi1: Tuple[int, int, int, int], 
                    roi2: Tuple[int, int, int, int]) -> np.ndarray:
-        # ROI 영역 그리기
-        cv2.rectangle(frame, (roi1[0], roi1[1]), 
-                     (roi1[0] + roi1[2], roi1[1] + roi1[3]), (0, 255, 0), 2)
-        cv2.rectangle(frame, (roi2[0], roi2[1]), 
-                     (roi2[0] + roi2[2], roi2[1] + roi2[3]), (0, 255, 0), 2)
-        
-        # 카운트 정보 표시
-        cv2.putText(frame, 
-                   f'in:{self.bee_counts["in"]} out:{self.bee_counts["out"]} '
-                   f'sum:{self.bee_counts["sum"]}', 
-                   (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
         return frame
 
     def _draw_detection(self, frame: np.ndarray, box: List[int], 
                        score: float, label: str) -> np.ndarray:
-        # 감지된 객체 표시
-        left, top, width, height = box
-        cv2.rectangle(frame, (left, top), (left + width, top + height), 
-                     (255, 0, 0), 2)
-        cv2.putText(frame, f'{label} {score:.2f}', (left, top - 10),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
         return frame
 
     def run(self):
@@ -279,9 +262,9 @@ class BeeDetector:
                     break
 
                 processed_frame = self.process_frame(frame)
-                cv2.imshow('Bee activaty', processed_frame)
+                # cv2.imshow('Bee activaty', processed_frame)
 
-                if cv2.waitKey(30) & 0xFF == ord('q'):
+                if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
         finally:
             cap.release()
