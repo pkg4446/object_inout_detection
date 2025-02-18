@@ -69,10 +69,8 @@ class BeeDetector:
             print("bee_counts 전송 성공:", self.bee_counts)
         except requests.RequestException as e:
             print("bee_counts 전송 실패:", e)
-        
         # bee_counts 초기화
         self.bee_counts = {"in": 0, "out": 0, "sum": 0}
-        
         # 타이머 재시작
         self._start_post_timer()
 
@@ -104,21 +102,18 @@ class BeeDetector:
             self.LOI_counts["in"] = [self.LOI_counts["in"][1], 0]
             self.LOI_counts["chk"] = [self.LOI_counts["chk"][1], 0]
             self.LOI_counts["out"] = [self.LOI_counts["out"][1], 0]
-
             # 현재 위치 기반 카운트
             for x, y in bee_positions:
                 in_roi1 = (roi1[0] <= x <= roi1[0] + roi1[2] and 
                           roi1[1] <= y <= roi1[1] + roi1[3])
                 in_roi2 = (roi2[0] <= x <= roi2[0] + roi2[2] and 
                           roi2[1] <= y <= roi2[1] + roi2[3])
-                
                 if in_roi1:
                     self.LOI_counts["in"][1] += 1
                 elif in_roi2:
                     self.LOI_counts["chk"][1] += 1
                 else:
                     self.LOI_counts["out"][1] += 1
-
             # 상태 변화 감지 및 처리
             if (self.LOI_counts["in"][0] != self.LOI_counts["in"][1] or 
                 self.LOI_counts["chk"][0] != self.LOI_counts["chk"][1] or 
@@ -159,7 +154,6 @@ class BeeDetector:
                 else:
                     self.LOI_counts["bee_out"] -= 1
                     print("2차 입장")
-        
         # ROI2(중간 영역) 벌 수 증가
         elif self.LOI_counts["chk"][1] > self.LOI_counts["chk"][0]:
             self.frame_count = 0
@@ -169,7 +163,6 @@ class BeeDetector:
             elif self.LOI_counts["in"][1] < self.LOI_counts["in"][0]:
                 self.LOI_counts["bee_out"] += 1
                 print("퇴장 준비")
-        
         # ROI2(중간 영역) 벌 수 유지
         else:
             print("event")
@@ -185,12 +178,10 @@ class BeeDetector:
         input_data = self.preprocess_image(frame)
         self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
         self.interpreter.invoke()
-
         # 결과 가져오기
         boxes = self.interpreter.get_tensor(self.output_details[0]['index'])[0]
         classes = self.interpreter.get_tensor(self.output_details[1]['index'])[0]
         scores = self.interpreter.get_tensor(self.output_details[2]['index'])[0]
-
         # NMS 적용을 위한 박스 변환
         detections = []
         for idx, score in enumerate(scores):
@@ -203,7 +194,6 @@ class BeeDetector:
                 detections.append(([left, top, right - left, bottom - top], 
                                  score, 
                                  self.labels[int(classes[idx])]))
-
         # NMS 적용
         if detections:
             boxes_list = [d[0] for d in detections]
@@ -228,23 +218,19 @@ class BeeDetector:
     def process_frame(self, frame: np.ndarray) -> np.ndarray:
         # 프레임 처리
         height, width = frame.shape[:2]
-        
         # ROI 영역 계산 및 그리기
         roi1 = self._calculate_roi(width, height, self.config.ROI1_RATIO)
         roi2 = self._calculate_roi(width, height, self.config.ROI2_RATIO)
-        
+
         frame = self._draw_rois(frame, roi1, roi2)
-        
         # 병렬 처리로 객체 감지 수행
         future = self.executor.submit(self.perform_detection, frame)
         detections = future.result()
-        
         # 감지된 객체 표시 및 위치 추적
         bee_positions = []
         for box, score, label in detections:
             frame = self._draw_detection(frame, box, score, label)
             bee_positions.append((box[0] + box[2]//2, box[1] + box[3]//2))
-        
         self._update_bee_tracking(bee_positions, roi1, roi2)
         
         return frame
@@ -277,7 +263,7 @@ class BeeDetector:
                 if not ret:
                     break
 
-                processed_frame = self.process_frame(frame)
+                self.process_frame(frame)
 
                 frame_count += 1
                 elapsed_time = time.time() - start_time
@@ -286,10 +272,6 @@ class BeeDetector:
                     print(f"FPS: {fps:.2f}")
                     frame_count = 0
                     start_time = time.time()
-
-                # cv2.imshow('Bee activaty', processed_frame)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
         finally:
             cap.release()
             cv2.destroyAllWindows()
