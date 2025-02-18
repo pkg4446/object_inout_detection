@@ -1,6 +1,7 @@
 import os
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
+import json
 import tensorflow as tf
 import numpy as np
 import cv2
@@ -14,16 +15,27 @@ import threading
 
 @dataclass
 class Config:
-    # 설정값을 관리하는 클래스
-    MODEL_PATH: str = "./model/detect.tflite"
-    LABEL_PATH: str = "./model/labelmap.txt"
-    VIDEO_PATH: str = "./video/test.avi"
-    CONFIDENCE_THRESHOLD: float = 0.2
-    IOU_THRESHOLD: float = 0.5
-    ROI1_RATIO: Tuple[float, float, float, float] = (0.3, 0.5, 0.4, 0.2)
-    ROI2_RATIO: Tuple[float, float, float, float] = (0.15, 0.3, 0.7, 0.6)
-    FRAME_RESET_COUNT: int = 30
-    NUM_THREADS: int = 4  # 병렬 처리 스레드 수
+    def __init__(self, config_path: str = None):
+        # 설정값을 관리하는 클래스
+        self.MODEL_PATH = "./model/detect.tflite"
+        self.LABEL_PATH = "./model/labelmap.txt"
+        self.VIDEO_PATH = "./video/test.avi"
+        self.CONFIDENCE_THRESHOLD = 0.2
+        self.IOU_THRESHOLD = 0.5
+        self.ROI1_RATIO = (0.0, 0.0, 0.0, 0.0)
+        self.ROI2_RATIO = (0.0, 0.0, 0.0, 0.0)
+        self.FRAME_RESET_COUNT = 30
+        self.NUM_THREADS = 4 # 병렬 처리 스레드 수
+
+        # JSON 파일에서 값 불러오기
+        if config_path:
+            self.load_from_json(config_path)
+
+    def load_from_json(self, config_path: str):
+        with open(config_path, 'r') as file:
+            data = json.load(file)
+            self.ROI1_RATIO = tuple(data.get("ROI1_RATIO", (0.0, 0.0, 0.0, 0.0)))
+            self.ROI2_RATIO = tuple(data.get("ROI2_RATIO", (0.0, 0.0, 0.0, 0.0)))
 
 class BeeDetector:
     def __init__(self, config: Config):
@@ -284,7 +296,7 @@ class BeeDetector:
             self.post_timer.cancel()  # 타이머 취소
 
 def main():
-    config = Config()
+    config = Config("ROI.json")
     detector = BeeDetector(config)
     detector.run()
 
