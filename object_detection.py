@@ -281,7 +281,8 @@ class BeeDetector:
 
     def run(self):
         # 비디오 처리 실행
-        cap = cv2.VideoCapture(self.config.VIDEO_PATH)
+        # cap = cv2.VideoCapture(self.config.VIDEO_PATH)
+        cap = cv2.VideoCapture(0)
         if not cap.isOpened():
             raise ValueError("비디오를 열 수 없습니다.")
 
