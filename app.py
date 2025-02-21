@@ -17,9 +17,8 @@ import threading
 class Config:
     def __init__(self, config_path: str = None):
         # 설정값을 관리하는 클래스
-        self.MODEL_PATH = "./model/detect.tflite"
-        self.LABEL_PATH = "./model/labelmap.txt"
-        self.VIDEO_PATH = "./video/test.avi"
+        self.MODEL_PATH = "./library"
+        # self.VIDEO_PATH = "./video/test.avi"
         self.CONFIDENCE_THRESHOLD = 0.2
         self.IOU_THRESHOLD = 0.5
         self.ROI1_RATIO = (0.0, 0.0, 0.0, 0.0)
@@ -41,7 +40,7 @@ class BeeDetector:
     def __init__(self, config: Config):
         self.config = config
         self.interpreter = self._load_model()
-        self.labels = self._load_labels()
+        self.labels = ['Bee']
         self.input_details = self.interpreter.get_input_details()
         self.output_details = self.interpreter.get_output_details()
         
@@ -79,11 +78,6 @@ class BeeDetector:
         interpreter = tf.lite.Interpreter(self.config.MODEL_PATH)
         interpreter.allocate_tensors()
         return interpreter
-
-    def _load_labels(self) -> List[str]:
-        # 라벨 파일 로드
-        with open(self.config.LABEL_PATH, 'r') as f:
-            return [line.strip() for line in f.readlines()]
 
     def preprocess_image(self, frame: np.ndarray) -> np.ndarray:
         # 이미지 전처리

@@ -24,8 +24,7 @@ PORT = 3000
 
 @dataclass
 class Config:
-    MODEL_PATH = "./model/detect.tflite"
-    LABEL_PATH = "./model/labelmap.txt"
+    MODEL_PATH = "./library"
     CONFIDENCE_THRESHOLD = 0.2
     IOU_THRESHOLD = 0.5
     FRAME_RESET_COUNT = 30
@@ -35,7 +34,7 @@ class BeeDetector:
     def __init__(self, config: Config):
         self.config = config
         self.interpreter = self._load_model()
-        self.labels = self._load_labels()
+        self.labels = ['Bee']
         self.input_details = self.interpreter.get_input_details()
         self.output_details = self.interpreter.get_output_details()
         self.executor = ThreadPoolExecutor(max_workers=self.config.NUM_THREADS)
@@ -44,10 +43,6 @@ class BeeDetector:
         interpreter = tf.lite.Interpreter(self.config.MODEL_PATH)
         interpreter.allocate_tensors()
         return interpreter
-
-    def _load_labels(self) -> List[str]:
-        with open(self.config.LABEL_PATH, 'r') as f:
-            return [line.strip() for line in f.readlines()]
 
     def preprocess_image(self, frame: np.ndarray) -> np.ndarray:
         input_size = (self.input_details[0]['shape'][2], 
