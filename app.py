@@ -1,12 +1,12 @@
 import os
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
-import json
-import tensorflow as tf
-import numpy as np
 import cv2
 import time
+import json
+import numpy as np
 from PIL import Image
+import tensorflow as tf
 from dataclasses import dataclass
 from typing import Tuple, List, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -52,7 +52,7 @@ class BeeDetector:
         }
         self.frame_count = 0
         self.executor = ThreadPoolExecutor(max_workers=self.config.NUM_THREADS)
-        self.server_url = "http://localhost:3002/"  # 웹 서버 URL
+        self.server_url = "http://bee.smarthive.kr/log/act"  # 웹 서버 URL
         self._start_post_timer()
 
     def _start_post_timer(self):
