@@ -1,6 +1,7 @@
 import os
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
+import uuid
 import cv2
 import time
 import json
@@ -25,6 +26,7 @@ class Config:
         self.ROI2_RATIO = (0.0, 0.0, 0.0, 0.0)
         self.FRAME_RESET_COUNT = 30
         self.NUM_THREADS = 4 # 병렬 처리 스레드 수
+        self.MAC_ADDR = self.get_mac_address()
 
         # JSON 파일에서 값 불러오기
         if config_path:
@@ -35,6 +37,10 @@ class Config:
             data = json.load(file)
             self.ROI1_RATIO = tuple(data.get("ROI1_RATIO", (0.0, 0.0, 0.0, 0.0)))
             self.ROI2_RATIO = tuple(data.get("ROI2_RATIO", (0.0, 0.0, 0.0, 0.0)))
+
+    def get_mac_address(self):
+        mac = uuid.UUID(int=uuid.getnode()).hex[-12:]
+        return ":".join([mac[e:e+2] for e in range(0, 12, 2)])
 
 class BeeDetector:
     def __init__(self, config: Config):
@@ -52,18 +58,19 @@ class BeeDetector:
         }
         self.frame_count = 0
         self.executor = ThreadPoolExecutor(max_workers=self.config.NUM_THREADS)
-        self.server_url = "http://bee.smarthive.kr/log/act"  # 웹 서버 URL
+        # self.server_url = "http://bee.smarthive.kr/log/act"  # 웹 서버 URL
+        self.server_url = "http://localhost:3002/log/act"  # 웹 서버 URL
         self._start_post_timer()
 
     def _start_post_timer(self):
         # 5분마다 bee_counts를 전송하고 초기화하는 타이머 시작
-        self.post_timer = threading.Timer(60*5, self._post_bee_counts)
+        self.post_timer = threading.Timer(1*5, self._post_bee_counts)
         self.post_timer.start()
 
     def _post_bee_counts(self):
         # bee_counts를 웹 서버로 전송하고 초기화
         try:
-            response = requests.post(self.server_url, json=self.bee_counts)
+            response = requests.post(self.server_url, json={"DVC":self.config.MAC_ADDR,"DATA":self.bee_counts})
             response.raise_for_status()
             print("bee_counts 전송 성공:", self.bee_counts)
         except requests.RequestException as e:
