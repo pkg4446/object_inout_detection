@@ -58,13 +58,12 @@ class BeeDetector:
         }
         self.frame_count = 0
         self.executor = ThreadPoolExecutor(max_workers=self.config.NUM_THREADS)
-        # self.server_url = "http://bee.smarthive.kr/log/act"  # 웹 서버 URL
-        self.server_url = "http://localhost:3002/log/act"  # 웹 서버 URL
+        self.server_url = "http://bee.smarthive.kr/log/act"  # 웹 서버 URL
         self._start_post_timer()
 
     def _start_post_timer(self):
         # 5분마다 bee_counts를 전송하고 초기화하는 타이머 시작
-        self.post_timer = threading.Timer(1*5, self._post_bee_counts)
+        self.post_timer = threading.Timer(60*5, self._post_bee_counts)
         self.post_timer.start()
 
     def _post_bee_counts(self):
